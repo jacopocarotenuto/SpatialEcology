@@ -1,4 +1,4 @@
-using Plots, DifferentialEquations, LinearAlgebra, TernaryPlots, QuadGK, LinearSolve, NonlinearSolve, DataFrames
+using Plots, DifferentialEquations, LinearAlgebra, TernaryPlots, QuadGK, LinearSolve, NonlinearSolve, DataFrames, Statistics
 
 # Include a file
 include("MyLibrary.jl");
@@ -36,4 +36,7 @@ PlotPopulationInTime(sol)
 
 
 ###### STATISTICS #######
-df = CollectStatisticsOnDynamics(400, 10, 2, [0.4,0.6], 0.01)
+df = CollectStatisticsOnDynamics(400, 10, 2, [0.4,0.6], LogRange(2*10^(-5), 2*10^(3), 15))
+
+# Plot the statistics
+PlotSurvivingSpecies(df)

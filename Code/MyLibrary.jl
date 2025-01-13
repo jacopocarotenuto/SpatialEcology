@@ -249,6 +249,7 @@ function ExtractStatisticsOnDynamics(sol)
 end
 
 function CollectStatisticsOnDynamics(realizations::Int64, m::Int64, p::Int64, SupplyVector::Vector{Float64}, D::Float64 )
+    println("τ = ", 2/D)
     df = DataFrame(SurvivingSpecies = Float32[])
     for i in 1:realizations
         sol = CompleteDynamics(2000, m, p, SupplyVector, true, D)
@@ -256,6 +257,27 @@ function CollectStatisticsOnDynamics(realizations::Int64, m::Int64, p::Int64, Su
         push!(df, stats)
     end
     return df
+end
+
+function CollectStatisticsOnDynamics(realizations::Int64, m::Int64, p::Int64, SupplyVector::Vector{Float64}, D::Vector{Float64})
+
+    df = DataFrame(SurvivingSpecies = Float32[], D = Float32[])
+    for d in D
+        print("\rτ = ", 2/d)
+        for i in 1:realizations
+            sol = CompleteDynamics(2000, m, p, SupplyVector, true, d)
+            stats = ExtractStatisticsOnDynamics(sol)
+            push!(df, vcat(stats,d))
+        end
+    end
+    return df
+end
+
+function LogRange(start, stop, len = false)
+    if len == false
+        len = Int(ceil(log10(stop) +1 - log10(start)))
+    end
+    return exp10.(LinRange(log10(start), log10(stop), len))
 end
 
 ####### Plotting Functions #######
@@ -295,5 +317,13 @@ function PlotPopulationInTime(sol, title="Population in Time", savepath="Latex/f
 
     fig = plot(sol.t,mat, yscale=:log10, ylims=ylims, legend=:bottomright, label=labels, title=title, xaxis="Time", yaxis="Population")
     savefig(fig, savepath)
+    return fig
+end
+
+function PlotSurvivingSpecies(stats)
+    cgd = combine(groupby(stats, :D), :SurvivingSpecies => mean, :SurvivingSpecies => std)
+    scatter(cgd.D, cgd.SurvivingSpecies_mean / 10, label=nothing)
+    fig = plot!(cgd.D, cgd.SurvivingSpecies_mean / 10, yerr = cgd.SurvivingSpecies_std / 10, label="Surviving Species", xlabel="Diffusion Rate", ylabel="Surviving Species", title="Surviving Species vs Diffusion Rate", legend=:topleft, xscale=:log10)
+    savefig(fig, "Latex/figures/SurvivingSpecies.pdf")
     return fig
 end
